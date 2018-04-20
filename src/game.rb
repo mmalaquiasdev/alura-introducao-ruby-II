@@ -85,7 +85,7 @@ def jogar
       qtd_erros = incrementar_qtd_erros(qtd_erros)
     end
 
-    if jogador_chutou_uma_letra?(chute)
+    unless jogador_chutou_uma_letra?(chute)
       if !acertou_palavra?(chute, palavra_secreta)
         pontos_do_jogador = diminuir_qtd_pontos(pontos_do_jogador)
         qtd_erros = incrementar_qtd_erros(qtd_erros)
