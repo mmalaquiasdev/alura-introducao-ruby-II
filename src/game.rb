@@ -1,70 +1,107 @@
-QTD_PONTOS_AO_ACERTAR = 100
-QTD_PONTOS_AO_ERRAR = 30
+require_relative 'ui'
 
-def jogador_chutou_uma_letra?(letra_ou_palavra)
-  letra_ou_palavra.size == 1
-end
-
-def jogador_acertou_palavra_secreta?(chute, palavra_secreta)
-  chute == palavra_secreta
-end
-
-def quantas_letras_jogador_acertou?(chute, palavra_secreta)
-  qtd_palavras_encontradas = palavra_secreta.count(chute[0])
-  if qtd_palavras_encontradas.zero?
-    puts 'Não foi dessa vez! Letra não encontrada! :('
-  elsif puts "Opa! Acertou uma letra!! Ela foi encontrada #{qtd_palavras_encontradas} vezes!"
-  end
-  qtd_palavras_encontradas
-end
+QTD_PONTOS_INICIAL = 100
+QTD_ERROS_INICIAL = 0
 
 def incrementar_qtd_erros(qtd_erros_atual)
   qtd_erros_atual + 1
 end
 
-def aumentar_pontos_do_jogador(pontos_atual, qtd_pontos)
-  pontos_atual + qtd_pontos
+def aumentar_qtd_pontos(qtd_pontos_atual)
+  qtd_pontos_atual + 100
 end
 
-def diminuir_pontos_dojogador(pontos_atual, qtd_pontos)
-  pontos_atual - qtd_pontos
+def diminuir_qtd_pontos(qtd_pontos_atual)
+  qtd_pontos_atual - 30
+end
+
+def obter_palavra_mascarada(chutes, palavra_secreta)
+  mascara = ''
+  for letra in palavra_secreta.chars
+		if chutes.include?(letra)
+			mascara += letra
+		else
+			mascara += "_"
+		end
+	end
+	mascara
+end
+
+def pedir_chute_valido(chutes, erros, mascara)
+  cabecalho_de_tentativa(chutes, erros, mascara)
+  chute = ''
+  loop do
+    chute = pede_um_chute
+    break if !chutes.include?(chute)
+    avisar_chute_repetido(chute)
+  end
+  chute
+end
+
+def jogador_chutou_uma_letra?(chute)
+  chute == 1
+end
+
+def chute_igual_palavra_screta?(chute, palavra_secreta)
+  chute == palavra_secreta
+end
+
+def acertou_letra?(chute, palavra_secreta)
+  if jogador_chutou_uma_letra?(chute)
+    qtd_letras_encontradas = palavra_secreta.count(chute[0])
+    if qtd_letras_encontradas.zero?
+      avisar_letra_nao_encontrada
+      false
+    else
+      avisar_letra_encontrada(qtd_letras_encontradas)
+      true
+    end
+  end
+end
+
+def acertou_palavra?(chute, palavra_secreta)
+  unless jogador_chutou_uma_letra?(chute)
+    avisar_errou_palavra
+    false
+  end
+  if chute_igual_palavra_screta?(chute, palavra_secreta)
+    avisar_acertou_palavra
+    true
+  end
 end
 
 def jogar
-  qtd_erros = 0
-  palavras_chutadas = []
-  pontos_do_jogador = 0
   palavra_secreta = sortear_palavra_secreta
+  palavras_chutadas = []
+  qtd_erros = QTD_ERROS_INICIAL
+  pontos_do_jogador = QTD_PONTOS_INICIAL
 
   while qtd_erros < 5
-    chute = pede_um_chute(palavras_chutadas, qtd_erros)
-    if palavras_chutadas.include? chute
-      puts "Você já chutou a palavra #{chute}, tente algo diferente dessa vez :)"
-      next
-    end
-
+    palavra_com_mascara = obter_palavra_mascarada(palavras_chutadas, palavra_secreta)
+    chute = pedir_chute_valido(palavras_chutadas, qtd_erros, palavra_com_mascara)
     palavras_chutadas << chute
 
+    unless acertou_letra?(chute, palavra_secreta)
+      qtd_erros = incrementar_qtd_erros(qtd_erros)
+    end
+
     if jogador_chutou_uma_letra?(chute)
-      qtd_palavras_encontradas = quantas_letras_jogador_acertou?(chute, palavra_secreta)
-      qtd_erros = incrementar_qtd_erros(qtd_erros) if qtd_palavras_encontradas.zero?
-    elsif jogador_acertou_palavra_secreta?(chute, palavra_secreta)
-      puts 'Parabéns! Você ganhou :)'
-      pontos_do_jogador = aumentar_pontos_do_jogador(pontos_do_jogador, QTD_PONTOS_AO_ACERTAR)
-      break
-    else
-      puts 'Vixi! Que pena... você errou :('
-      pontos_do_jogador = diminuir_pontos_dojogador(pontos_do_jogador, QTD_PONTOS_AO_ERRAR)
-      incrementar_qtd_erros(qtd_erros)
+      if !acertou_palavra?(chute, palavra_secreta)
+        pontos_do_jogador = diminuir_qtd_pontos(pontos_do_jogador)
+        qtd_erros = incrementar_qtd_erros(qtd_erros)
+      else
+        pontos_do_jogador = aumentar_qtd_pontos(pontos_do_jogador)
+      end
     end
   end
-
-  puts "Seu record foi de #{pontos_do_jogador} pontos"
+  imprimir_qtd_pontos(pontos_do_jogador)
 end
 
-imprimir_boas_vindas
+def iniciar_jogo
+  boas_vindas
 
-loop do
-  jogar
-  break if encerrar_jogo?
+  loop do
+    jogar
+    break if encerrar_jogo?
+  end
 end
